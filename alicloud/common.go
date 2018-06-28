@@ -354,7 +354,7 @@ func LoadEndpoint(region string, serviceCode ServiceCode) string {
 }
 
 func IsSkipResourceCheck() bool{
-	flag := os.Getenv("ALICLOUD_NOT_CHECK_RESOURCE")
+	flag := os.Getenv("ALICLOUD_SKIP_CHECK_RESOURCE")
 	if flag != ""{
 		return true
 	}

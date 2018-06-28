@@ -159,6 +159,9 @@ func (c *Config) loadAndValidate() error {
 }
 
 func (c *Config) validateRegion() error {
+	if os.Getenv("ALICLOUD_SKIP_CHECK_REGION") != ""{
+		return nil
+	}
 
 	for _, valid := range common.ValidRegions {
 		if c.Region == valid {
