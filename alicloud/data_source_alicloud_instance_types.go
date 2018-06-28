@@ -157,26 +157,28 @@ func dataSourceAlicloudInstanceTypes() *schema.Resource {
 func dataSourceAlicloudInstanceTypesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*AliyunClient)
 
-	zoneId, validZones, err := client.DescribeAvailableResources(d, meta, InstanceTypeResource)
-	if err != nil {
-		return err
-	}
-
 	mapInstanceTypes := make(map[string][]string)
-	for _, zone := range validZones {
-		if zoneId != "" && zoneId != zone.ZoneId {
-			continue
+	if IsSkipResourceCheck() == false {
+		zoneId, validZones, err := client.DescribeAvailableResources(d, meta, InstanceTypeResource)
+		if err != nil {
+			return err
 		}
-		for _, r := range zone.AvailableResources.AvailableResource {
-			if r.Type == string(InstanceTypeResource) {
-				for _, t := range r.SupportedResources.SupportedResource {
-					if t.Status == string(SoldOut) {
-						continue
-					}
 
-					zones, _ := mapInstanceTypes[t.Value]
-					zones = append(zones, zone.ZoneId)
-					mapInstanceTypes[t.Value] = zones
+		for _, zone := range validZones {
+			if zoneId != "" && zoneId != zone.ZoneId {
+				continue
+			}
+			for _, r := range zone.AvailableResources.AvailableResource {
+				if r.Type == string(InstanceTypeResource) {
+					for _, t := range r.SupportedResources.SupportedResource {
+						if t.Status == string(SoldOut) {
+							continue
+						}
+
+						zones, _ := mapInstanceTypes[t.Value]
+						zones = append(zones, zone.ZoneId)
+						mapInstanceTypes[t.Value] = zones
+					}
 				}
 			}
 		}
@@ -198,8 +200,10 @@ func dataSourceAlicloudInstanceTypesRead(d *schema.ResourceData, meta interface{
 	}
 	var instanceTypes []ecs.InstanceType
 	for _, types := range resp.InstanceTypes.InstanceType {
-		if _, ok := mapInstanceTypes[types.InstanceTypeId]; !ok {
-			continue
+		if IsSkipResourceCheck() == false {
+			if _, ok := mapInstanceTypes[types.InstanceTypeId]; !ok {
+				continue
+			}
 		}
 
 		if cpu > 0 && types.CpuCoreCount != cpu {
@@ -230,9 +234,13 @@ func instanceTypesDescriptionAttributes(d *schema.ResourceData, types []ecs.Inst
 			"family":         t.InstanceTypeFamily,
 			"eni_amount":     t.EniQuantity,
 		}
-		zoneIds := mapTypes[t.InstanceTypeId]
-		sort.Strings(zoneIds)
-		mapping["availability_zones"] = zoneIds
+
+		if IsSkipResourceCheck() == false {
+			zoneIds := mapTypes[t.InstanceTypeId]
+			sort.Strings(zoneIds)
+			mapping["availability_zones"] = zoneIds
+		}
+
 		gpu := map[string]interface{}{
 			"amount":   strconv.Itoa(t.GPUAmount),
 			"category": t.GPUSpec,

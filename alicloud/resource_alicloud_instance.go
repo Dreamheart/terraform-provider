@@ -247,12 +247,14 @@ func resourceAliyunInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	conn := client.ecsconn
 
 	// Ensure instance_type is valid
-	zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
-	if err != nil {
-		return err
-	}
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
-		return err
+	if IsSkipResourceCheck() == false {
+		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
+		if err != nil {
+			return err
+		}
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
+			return err
+		}
 	}
 
 	args, err := buildAliyunInstanceArgs(d, meta)
@@ -902,12 +904,14 @@ func modifyInstanceType(d *schema.ResourceData, meta interface{}, run bool) (boo
 			return update, fmt.Errorf("At present, 'PrePaid' instance type cannot be modified.")
 		}
 		// Ensure instance_type is valid
-		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
-		if err != nil {
-			return update, err
-		}
-		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
-			return update, err
+		if IsSkipResourceCheck() == false {
+			zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
+			if err != nil {
+				return update, err
+			}
+			if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
+				return update, err
+			}
 		}
 
 		d.SetPartial("instance_type")
@@ -917,7 +921,7 @@ func modifyInstanceType(d *schema.ResourceData, meta interface{}, run bool) (boo
 		args.InstanceId = d.Id()
 		args.InstanceType = d.Get("instance_type").(string)
 
-		err = resource.Retry(6*time.Minute, func() *resource.RetryError {
+		err := resource.Retry(6*time.Minute, func() *resource.RetryError {
 			if _, err := client.ecsconn.ModifyInstanceSpec(args); err != nil {
 				if IsExceptedError(err, EcsThrottling) {
 					time.Sleep(10 * time.Second)

@@ -353,6 +353,14 @@ func LoadEndpoint(region string, serviceCode ServiceCode) string {
 	return ""
 }
 
+func IsSkipResourceCheck() bool{
+	flag := os.Getenv("ALICLOUD_NOT_CHECK_RESOURCE")
+	if flag != ""{
+		return true
+	}
+	return false
+}
+
 const ApiVersion20140526 = "2014-05-26"
 const ApiVersion20140828 = "2014-08-28"
 

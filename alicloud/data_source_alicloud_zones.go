@@ -137,9 +137,13 @@ func dataSourceAlicloudZonesRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("There is no multi zones in the current region %s. Please change region and try again.", getRegion(d, meta))
 	}
 
-	_, validZones, err := client.DescribeAvailableResources(d, meta, ZoneResource)
-	if err != nil {
-		return err
+	validZones := make([]ecs.AvailableZone,0)
+	if IsSkipResourceCheck() == false {
+		_, tempValidZones, err := client.DescribeAvailableResources(d, meta, ZoneResource)
+		if err != nil {
+			return err
+		}
+		validZones = tempValidZones
 	}
 
 	req := ecs.CreateDescribeZonesRequest()
@@ -162,24 +166,31 @@ func dataSourceAlicloudZonesRead(d *schema.ResourceData, meta interface{}) error
 	insType, _ := d.Get("available_instance_type").(string)
 	diskType, _ := d.Get("available_disk_category").(string)
 
-	for _, zone := range resp.Zones.Zone {
-		for _, v := range validZones {
-			if zone.ZoneId != v.ZoneId {
-				continue
-			}
-			if len(zone.AvailableInstanceTypes.InstanceTypes) <= 0 ||
-				(insType != "" && !constraints(zone.AvailableInstanceTypes.InstanceTypes, insType)) {
-				continue
-			}
-			if len(zone.AvailableDiskCategories.DiskCategories) <= 0 ||
-				(diskType != "" && !constraints(zone.AvailableDiskCategories.DiskCategories, diskType)) {
-				continue
-			}
-			if len(rdsZones) > 0 {
-				if _, ok := rdsZones[zone.ZoneId]; !ok {
+	if IsSkipResourceCheck() == false {
+		for _, zone := range resp.Zones.Zone {
+			for _, v := range validZones {
+				if zone.ZoneId != v.ZoneId {
 					continue
 				}
+				if len(zone.AvailableInstanceTypes.InstanceTypes) <= 0 ||
+					(insType != "" && !constraints(zone.AvailableInstanceTypes.InstanceTypes, insType)) {
+					continue
+				}
+				if len(zone.AvailableDiskCategories.DiskCategories) <= 0 ||
+					(diskType != "" && !constraints(zone.AvailableDiskCategories.DiskCategories, diskType)) {
+					continue
+				}
+				if len(rdsZones) > 0 {
+					if _, ok := rdsZones[zone.ZoneId]; !ok {
+						continue
+					}
+				}
+				zoneIds = append(zoneIds, zone.ZoneId)
+				mapZones[zone.ZoneId] = zone
 			}
+		}
+	}else{
+		for _, zone := range resp.Zones.Zone {
 			zoneIds = append(zoneIds, zone.ZoneId)
 			mapZones[zone.ZoneId] = zone
 		}
