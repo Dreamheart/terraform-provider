@@ -1,4 +1,4 @@
-package: github.com/alibaba/terraform-provider
+package: github.com/Dreamheart/terraform-provider
 import:
 - package: github.com/hashicorp/terraform
   version: 0.11.3

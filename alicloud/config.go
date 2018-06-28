@@ -30,6 +30,7 @@ import (
 	"github.com/denverdino/aliyungo/location"
 	"github.com/denverdino/aliyungo/ram"
 	"github.com/denverdino/aliyungo/slb"
+	"github.com/Dreamheart/apsarastack-mq-go-sdk/service/ons"
 	"github.com/hashicorp/terraform/terraform"
 )
 
@@ -62,6 +63,7 @@ type AliyunClient struct {
 	otsconn  *tablestore.TableStoreClient
 	cmsconn  *cms.Client
 	logconn  *sls.Client
+	onsconn  *ons.Client
 }
 
 // Client for AliyunClient
@@ -127,6 +129,10 @@ func (c *Config) Client() (*AliyunClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	onsconn, err := c.onsConn()
+	if err != nil {
+		return nil, err
+	}
 	return &AliyunClient{
 		Region:   c.Region,
 		RegionId: c.RegionId,
@@ -144,6 +150,7 @@ func (c *Config) Client() (*AliyunClient, error) {
 		otsconn:  otsconn,
 		cmsconn:  cmsconn,
 		logconn:  c.logConn(),
+		onsconn:  onsconn,
 	}, nil
 }
 
@@ -220,30 +227,33 @@ func (c *Config) essConn() (*ess.Client, error) {
 	return ess.NewClientWithOptions(c.RegionId, getSdkConfig(), c.getAuthCredential(true))
 }
 func (c *Config) ossConn() (*oss.Client, error) {
-
-	endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
-	endpointClient.SetSecurityToken(c.SecurityToken)
-	args := &location.DescribeEndpointsArgs{
-		Id:          c.Region,
-		ServiceCode: "oss",
-		Type:        "openAPI",
-	}
-
-	endpoints, err := endpointClient.DescribeEndpoints(args)
-	if err != nil {
-		return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
-	}
-	endpointItem := endpoints.Endpoints.Endpoint
-	var endpoint string
-	if endpointItem == nil || len(endpointItem) <= 0 {
-		log.Printf("Cannot find endpoint in the region: %#v", c.Region)
-		endpoint = ""
-	} else {
-		endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
-	}
+	endpoint := LoadEndpoint(c.RegionId, OSSCode)
 
 	if endpoint == "" {
-		endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
+		endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
+		endpointClient.SetSecurityToken(c.SecurityToken)
+		args := &location.DescribeEndpointsArgs{
+			Id:          c.Region,
+			ServiceCode: "oss",
+			Type:        "openAPI",
+		}
+
+		endpoints, err := endpointClient.DescribeEndpoints(args)
+		if err != nil {
+			return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
+		}
+		endpointItem := endpoints.Endpoints.Endpoint
+		var endpoint string
+		if endpointItem == nil || len(endpointItem) <= 0 {
+			log.Printf("Cannot find endpoint in the region: %#v", c.Region)
+			endpoint = ""
+		} else {
+			endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
+		}
+
+		if endpoint == "" {
+			endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
+		}
 	}
 
 	log.Printf("[DEBUG] Instantiate OSS client using endpoint: %#v", endpoint)
@@ -317,6 +327,18 @@ func (c *Config) logConn() *sls.Client {
 		SecurityToken:   c.SecurityToken,
 		UserAgent:       getUserAgent(),
 	}
+}
+
+func (c *Config) onsConn() (*ons.Client, error){
+	endpoint := os.Getenv("ONS_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://" + "ons." + c.RegionId + ".aliyuncs.com"
+	}
+	client, err:= ons.NewClient(c.AccessKey, c.SecretKey, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func getSdkConfig() *sdk.Config {
