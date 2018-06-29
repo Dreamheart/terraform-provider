@@ -508,7 +508,7 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 	client := meta.(*AliyunClient)
 
 	// Ensure instance_type is valid
-	zoneId := strings.TrimSpace(d.Get("availability_zone").(string))
+	zoneId := ""
 	if IsSkipResourceCheck() == false {
 		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
 		if err != nil {
@@ -520,6 +520,14 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 
 		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("worker_instance_type").(string), zoneId, validZones); err != nil {
 			return nil, err
+		}
+	}else{
+		if v, ok := d.GetOk("availability_zone"); ok && strings.TrimSpace(v.(string)) != "" {
+			zoneId = strings.TrimSpace(v.(string))
+		} else if v, ok := d.GetOk("vswitch_id"); ok && strings.TrimSpace(v.(string)) != "" {
+			if vsw, err := meta.(*AliyunClient).DescribeVswitch(strings.TrimSpace(v.(string))); err == nil {
+				zoneId = vsw.ZoneId
+			}
 		}
 	}
 
