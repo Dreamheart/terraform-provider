@@ -11,6 +11,7 @@ import (
 	"github.com/denverdino/aliyungo/slb"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"strings"
 )
 
 func resourceAlicloudCSKubernetes() *schema.Resource {
@@ -507,16 +508,19 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 	client := meta.(*AliyunClient)
 
 	// Ensure instance_type is valid
-	zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
-	if err != nil {
-		return nil, err
-	}
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("master_instance_type").(string), zoneId, validZones); err != nil {
-		return nil, err
-	}
+	zoneId := strings.TrimSpace(d.Get("availability_zone").(string))
+	if IsSkipResourceCheck() == false {
+		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
+		if err != nil {
+			return nil, err
+		}
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("master_instance_type").(string), zoneId, validZones); err != nil {
+			return nil, err
+		}
 
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("worker_instance_type").(string), zoneId, validZones); err != nil {
-		return nil, err
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("worker_instance_type").(string), zoneId, validZones); err != nil {
+			return nil, err
+		}
 	}
 
 	var clusterName string
