@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"strings"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/log"
 )
 
 func resourceAlicloudCSKubernetes() *schema.Resource {
@@ -411,8 +412,9 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 
 	master_instance_id := ""
 	for _,item := range cluster.Outputs{
+		log.Print("[DEBUG] ====>>Key: %s\n           OUTPUT.VAL : %v", item.Key, item.Val)
 		if item.Key == "MasterInstanceIDs"{
-			master_instance_id = item.Vals[0]
+			master_instance_id = item.Val.([]interface{})[0].(string)
 			break
 		}
 	}

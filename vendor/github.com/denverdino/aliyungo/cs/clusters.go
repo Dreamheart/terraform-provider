@@ -59,6 +59,10 @@ type ClusterType struct {
 	VSwitchID              string           `json:"vswitch_id"`
 	NodeStatus             string           `json:"node_status"`
 	DockerVersion          string           `json:"docker_version"`
+}
+
+type ClusterDetailType struct{
+	ClusterType
 
 	Parameters		KubernetesClusterDetailParameters	`json:"parameters"`
 	Outputs		[]KubernetesClusterDetailOutputKV	`json:"outputs"`
@@ -69,7 +73,7 @@ type KubernetesClusterDetailParameters struct {
 	VpcId		string	`json:"VpcId"`
 	VSwitchId	string	`json:"VSwitchId"`
 	ZoneId		string	`json:"ZoneId"`
-	SSHFlags	bool	`json:"SSHFlags"`
+	SSHFlags	string	`json:"SSHFlags"`
 	ServiceCIDR	string	`json:"ServiceCIDR"`
 	ContainerCIDR	string	`json:"ContainerCIDR"`
 
@@ -77,8 +81,7 @@ type KubernetesClusterDetailParameters struct {
 
 type KubernetesClusterDetailOutputKV struct {
 	Key		string	`json:"OutputKey"`
-	//Val		string	`json:"OutputValue"`
-	Vals		[]string	`json:"OutputValue"`
+	Val		interface{}	`json:"OutputValue"`
 	Description		string	`json:"Description"`
 }
 
@@ -93,7 +96,7 @@ func (client *Client) DescribeClusters(nameFilter string) (clusters []ClusterTyp
 	return
 }
 
-func (client *Client) DescribeCluster(id string) (cluster ClusterType, err error) {
+func (client *Client) DescribeCluster(id string) (cluster ClusterDetailType, err error) {
 	err = client.Invoke("", http.MethodGet, "/clusters/"+id, nil, nil, &cluster)
 	return
 }
@@ -238,6 +241,7 @@ func (client *Client) GetKubernetesClusterNodes(id string, pagination common.Pag
 
 	return response.Nodes, &response.Page, nil
 }
+
 
 const ClusterDefaultTimeout = 300
 const DefaultWaitForInterval = 10
