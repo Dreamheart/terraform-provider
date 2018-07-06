@@ -59,6 +59,27 @@ type ClusterType struct {
 	VSwitchID              string           `json:"vswitch_id"`
 	NodeStatus             string           `json:"node_status"`
 	DockerVersion          string           `json:"docker_version"`
+
+	Parameters		KubernetesClusterDetailParameters	`json:"parameters"`
+	Outputs		[]KubernetesClusterDetailOutputKV	`json:"outputs"`
+}
+
+
+type KubernetesClusterDetailParameters struct {
+	VpcId		string	`json:"VpcId"`
+	VSwitchId	string	`json:"VSwitchId"`
+	ZoneId		string	`json:"ZoneId"`
+	SSHFlags	bool	`json:"SSHFlags"`
+	ServiceCIDR	string	`json:"ServiceCIDR"`
+	ContainerCIDR	string	`json:"ContainerCIDR"`
+
+}
+
+type KubernetesClusterDetailOutputKV struct {
+	Key		string	`json:"OutputKey"`
+	//Val		string	`json:"OutputValue"`
+	Vals		[]string	`json:"OutputValue"`
+	Description		string	`json:"Description"`
 }
 
 func (client *Client) DescribeClusters(nameFilter string) (clusters []ClusterType, err error) {
@@ -121,8 +142,8 @@ type KubernetesStackArgs struct {
 	WorkerSystemDiskSize     int64            `json:"WorkerSystemDiskSize"`
 	WorkerSystemDiskCategory ecs.DiskCategory `json:"WorkerSystemDiskCategory"`
 	ImageID                  string           `json:"ImageId,omitempty"`
-	CloudMonitorFlags        bool             `json:"CloudMonitorFlags"`
-	SNatEntry                bool             `json:"SNatEntry"`
+	//CloudMonitorFlags        bool             `json:"CloudMonitorFlags"`
+	//SNatEntry                bool             `json:"SNatEntry"`
 }
 
 type KubernetesCreationArgs struct {
