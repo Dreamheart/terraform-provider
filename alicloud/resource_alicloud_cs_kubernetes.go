@@ -326,6 +326,15 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
+	master_instance_id := ""
+	for _,item := range cluster.Outputs{
+		log.Print("[DEBUG] ====>>Key: %s\n           OUTPUT.VAL : %v", item.Key, item.Val)
+		if item.Key == "MasterInstanceIDs"{
+			master_instance_id = item.Val.([]interface{})[0].(string)
+			break
+		}
+	}
+
 	d.Set("name", cluster.Name)
 	// Each k8s cluster contains 3 master nodes
 	d.Set("worker_number", cluster.Size-KubernetesMasterNumber)
@@ -401,21 +410,12 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 	//	d.Set("worker_disk_size", disks[0].Size)
 	//	d.Set("worker_disk_category", disks[0].Category)
 	//}
-	//
-	//if cluster.SecurityGroupID == "" {
-	//	if inst, err := client.DescribeInstanceAttribute(worker.InstanceId); err != nil {
-	//		return fmt.Errorf("[ERROR] DescribeInstanceAttribute %s got an error: %#v.", worker.InstanceId, err)
-	//	} else {
-	//		d.Set("security_group_id", inst.SecurityGroupIds.SecurityGroupId[0])
-	//	}
-	//}
 
-	master_instance_id := ""
-	for _,item := range cluster.Outputs{
-		log.Print("[DEBUG] ====>>Key: %s\n           OUTPUT.VAL : %v", item.Key, item.Val)
-		if item.Key == "MasterInstanceIDs"{
-			master_instance_id = item.Val.([]interface{})[0].(string)
-			break
+	if cluster.SecurityGroupID == "" {
+		if inst, err := client.DescribeInstanceAttribute(master_instance_id); err != nil {
+			return fmt.Errorf("[ERROR] DescribeInstanceAttribute %s got an error: %#v.", master_instance_id, err)
+		} else {
+			d.Set("security_group_id", inst.SecurityGroupIds.SecurityGroupId[0])
 		}
 	}
 
