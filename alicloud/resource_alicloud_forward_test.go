@@ -51,19 +51,15 @@ func testAccCheckForwardEntryDestroy(s *terraform.State) error {
 		}
 
 		// Try to find the Snat entry
-		instance, err := client.DescribeForwardEntry(rs.Primary.Attributes["forward_table_id"], rs.Primary.ID)
-
-		if err != nil && !NotFoundError(err) {
+		if _, err := client.DescribeForwardEntry(rs.Primary.Attributes["forward_table_id"], rs.Primary.ID); err != nil {
+			if NotFoundError(err) {
+				continue
+			}
 			// Verify the error is what we want
 			return err
 		}
 
-		//this special deal cause the DescribeSnatEntry can't find the records would be throw "cant find the snatTable error"
-		if instance.ForwardEntryId == "" {
-			return nil
-		} else {
-			return fmt.Errorf("Forward entry still exist")
-		}
+		return fmt.Errorf("Forward entry %s still exist", rs.Primary.Attributes["forward_table_id"])
 
 	}
 
@@ -97,6 +93,9 @@ func testAccCheckForwardEntryExists(n string, snat *vpc.ForwardTableEntry) resou
 }
 
 const testAccForwardEntryConfig = `
+variable "name" {
+	default = "testAccForwardEntryConfig"
+}
 provider "alicloud"{
 	region = "cn-hangzhou"
 }
@@ -106,7 +105,7 @@ data "alicloud_zones" "default" {
 }
 
 resource "alicloud_vpc" "foo" {
-	name = "tf_test_foo"
+	name = "${var.name}"
 	cidr_block = "172.16.0.0/12"
 }
 
@@ -114,12 +113,13 @@ resource "alicloud_vswitch" "foo" {
 	vpc_id = "${alicloud_vpc.foo.id}"
 	cidr_block = "172.16.0.0/21"
 	availability_zone = "${data.alicloud_zones.default.zones.0.id}"
+	name = "${var.name}"
 }
 
 resource "alicloud_nat_gateway" "foo" {
 	vpc_id = "${alicloud_vpc.foo.id}"
 	specification = "Small"
-	name = "test_foo"
+	name = "${var.name}"
 }
 
 resource "alicloud_eip" "foo" {}
@@ -149,6 +149,9 @@ resource "alicloud_forward_entry" "foo1"{
 `
 
 const testAccForwardEntryUpdate = `
+variable "name" {
+	default = "testAccForwardEntryConfig"
+}
 provider "alicloud"{
 	region = "cn-hangzhou"
 }
@@ -158,7 +161,7 @@ data "alicloud_zones" "default" {
 }
 
 resource "alicloud_vpc" "foo" {
-	name = "tf_test_foo"
+	name = "${var.name}"
 	cidr_block = "172.16.0.0/12"
 }
 
@@ -166,12 +169,13 @@ resource "alicloud_vswitch" "foo" {
 	vpc_id = "${alicloud_vpc.foo.id}"
 	cidr_block = "172.16.0.0/21"
 	availability_zone = "${data.alicloud_zones.default.zones.0.id}"
+	name = "${var.name}"
 }
 
 resource "alicloud_nat_gateway" "foo" {
 	vpc_id = "${alicloud_vpc.foo.id}"
 	specification = "Small"
-	name = "test_foo"
+	name = "${var.name}"
 }
 
 resource "alicloud_eip" "foo" {}

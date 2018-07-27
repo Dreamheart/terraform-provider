@@ -1,3 +1,42 @@
+## 1.9.7 (Unreleased)
+
+IMPROVEMENTS:
+
+- Support new field 'instance_name' for _alicloud_ots_table_ ([#548](https://github.com/alibaba/terraform-provider/pull/548)))
+- *New Resource*: _alicloud_ots_instance_attachment_ ([#547](https://github.com/alibaba/terraform-provider/pull/547)))
+- *New Resource*: _alicloud_ots_instance_ ([#546](https://github.com/alibaba/terraform-provider/pull/546)))
+
+## 1.9.6 (July 16, 2018)
+
+IMPROVEMENTS:
+
+- Remove the number limitation of vswitch_ids, slb_ids and db_instance_ids ([#539](https://github.com/alibaba/terraform-provider/pull/539)))
+- Reduce test nat gateway cost ([#538](https://github.com/alibaba/terraform-provider/pull/538)))
+- Improve cs application resource test case ([#537](https://github.com/alibaba/terraform-provider/pull/537)))
+- Improve ecs resource test case ([#536](https://github.com/alibaba/terraform-provider/pull/536)))
+- Improve eip resource test case ([#535](https://github.com/alibaba/terraform-provider/pull/535)))
+- Improve rds resource test case ([#534](https://github.com/alibaba/terraform-provider/pull/534)))
+- Improve ess resource test case ([#533](https://github.com/alibaba/terraform-provider/pull/533)))
+- Improve vpc and vswitch resource test case ([#532](https://github.com/alibaba/terraform-provider/pull/532)))
+- Improve slb resource test case ([#531](https://github.com/alibaba/terraform-provider/pull/531)))
+- Improve security group resource test case ([#530](https://github.com/alibaba/terraform-provider/pull/530)))
+- Improve ram resource test case ([#529](https://github.com/alibaba/terraform-provider/pull/529)))
+- Improve container cluster resource test case ([#528](https://github.com/alibaba/terraform-provider/pull/528)))
+- Improve cloud monitor resource test case ([#527](https://github.com/alibaba/terraform-provider/pull/527)))
+- Improve route resource test case ([#526](https://github.com/alibaba/terraform-provider/pull/526)))
+- Improve nat gateway resource test case ([#526](https://github.com/alibaba/terraform-provider/pull/526)))
+- Improve log resource test case ([#525](https://github.com/alibaba/terraform-provider/pull/525)))
+- Improve ots resource test case ([#524](https://github.com/alibaba/terraform-provider/pull/524)))
+- Improve dns resource test case ([#523](https://github.com/alibaba/terraform-provider/pull/523)))
+- Improve oss resource test case ([#522](https://github.com/alibaba/terraform-provider/pull/522)))
+- Support changing ecs charge type from Prepaid to PostPaid ([#521](https://github.com/alibaba/terraform-provider/pull/521)))
+- Add method to compare json template is equal ([#508](https://github.com/alibaba/terraform-provider/pull/508)))
+
+BUG FIXES:
+
+- Fix CS kubernetes error and CS app timeout ([#528](https://github.com/alibaba/terraform-provider/pull/528)))
+- Fix Oss bucket diff error ([#522](https://github.com/alibaba/terraform-provider/pull/522)))
+
 ## 1.9.5 (June 20, 2018)
 
 IMPROVEMENTS:
