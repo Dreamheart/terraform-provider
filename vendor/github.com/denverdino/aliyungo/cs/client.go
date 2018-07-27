@@ -1,6 +1,7 @@
 package cs
 
 import (
+	"os"
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
