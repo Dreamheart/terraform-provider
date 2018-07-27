@@ -411,6 +411,10 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 	//	d.Set("worker_disk_category", disks[0].Category)
 	//}
 
+	if master_instance_id == "" {
+		return fmt.Errorf("[ERROR] Cluster master instance id is null")
+	}
+
 	if cluster.SecurityGroupID == "" {
 		if inst, err := client.DescribeInstanceAttribute(master_instance_id); err != nil {
 			return fmt.Errorf("[ERROR] DescribeInstanceAttribute %s got an error: %#v.", master_instance_id, err)
