@@ -400,6 +400,22 @@ func (client *AliyunClient) DescribeImageById(id string) (image ecs.Image, err e
 	return resp.Images.Image[0], nil
 }
 
+func (client *AliyunClient) DescribeNetworkInterfaceById(id string) (network_interface ecs.NetworkInterfaceSet, err error) {
+	req := ecs.CreateDescribeNetworkInterfacesRequest()
+	req.NetworkInterfaceId = &[]string{id}
+
+	resp, err := client.ecsconn.DescribeNetworkInterfaces(req)
+	if err != nil {
+		return
+	}
+	if resp == nil || len(resp.NetworkInterfaceSets.NetworkInterfaceSet) < 1 {
+		err = GetNotFoundErrorFromString(GetNotFoundMessage("NetworkInterface", id))
+		return
+	}
+
+	return resp.NetworkInterfaceSets.NetworkInterfaceSet[0], nil
+}
+
 // WaitForInstance waits for instance to given status
 func (client *AliyunClient) WaitForEcsInstance(instanceId string, status Status, timeout int) error {
 	if timeout <= 0 {
@@ -443,6 +459,32 @@ func (client *AliyunClient) WaitForEcsDisk(diskId string, status Status, timeout
 		timeout = timeout - DefaultIntervalShort
 		if timeout <= 0 {
 			return GetTimeErrorFromString(GetTimeoutMessage("ECS Disk", string(status)))
+		}
+		time.Sleep(DefaultIntervalShort * time.Second)
+
+	}
+	return nil
+}
+
+// WaitForNetworkInterface waits for eni to given status
+func (client *AliyunClient) WaitForNetworkInterface(network_interface_id string, status Status, timeout int) error {
+	if timeout <= 0 {
+		timeout = DefaultTimeout
+	}
+
+	for {
+		eni, err := client.DescribeNetworkInterfaceById(network_interface_id)
+		if err != nil {
+			return err
+		}
+		if eni.Status == string(status) {
+			//Sleep one more time for timing issues
+			time.Sleep(DefaultIntervalMedium * time.Second)
+			break
+		}
+		timeout = timeout - DefaultIntervalShort
+		if timeout <= 0 {
+			return GetTimeErrorFromString(GetTimeoutMessage("NetworkInterface", string(status)))
 		}
 		time.Sleep(DefaultIntervalShort * time.Second)
 

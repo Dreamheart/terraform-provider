@@ -27,6 +27,11 @@ const (
 	InstanceIncorrectStatus    = "IncorrectInstanceStatus"
 	HaVipIncorrectStatus       = "IncorrectHaVipStatus"
 	COMMODITYINVALID_COMPONENT = "COMMODITY.INVALID_COMPONENT"
+	// eni
+	DetachPrimaryEniNotAllowed = "InvalidOperation.DetachPrimaryEniNotAllowed"
+	InvalidEniType				= "InvalidOperation.InvalidEniType"
+	InvalidEniState 			= "InvalidOperation.InvalidEniState"
+	InvalidEcsState				= "InvalidOperation.InvalidEcsState"
 	// slb
 	LoadBalancerNotFound        = "InvalidLoadBalancerId.NotFound"
 	UnsupportedProtocalPort     = "UnsupportedOperationonfixedprotocalport"
