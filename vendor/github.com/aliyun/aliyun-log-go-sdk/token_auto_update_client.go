@@ -638,3 +638,185 @@ func (c *TokenAutoUpdateClient) GetIndex(project, logstore string) (index *Index
 	}
 	return
 }
+
+func (c *TokenAutoUpdateClient) ListDashboard(project string, dashboardName string, offset, size int) (dashboardList []string, count, total int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		dashboardList, count, total, err = c.logClient.ListDashboard(project, dashboardName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) GetDashboard(project, name string) (dashboard *Dashboard, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		dashboard, err = c.logClient.GetDashboard(project, name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) DeleteDashboard(project, name string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteDashboard(project, name)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) UpdateDashboard(project string, dashboard Dashboard) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateDashboard(project, dashboard)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) CreateDashboard(project string, dashboard Dashboard) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateDashboard(project, dashboard)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) GetChart(project, dashboardName, chartName string) (chart *Chart, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		chart, err = c.logClient.GetChart(project, dashboardName, chartName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) DeleteChart(project, dashboardName, chartName string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteChart(project, dashboardName, chartName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) UpdateChart(project, dashboardName string, chart Chart) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateChart(project, dashboardName, chart)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+func (c *TokenAutoUpdateClient) CreateChart(project, dashboardName string, chart Chart) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateChart(project, dashboardName, chart)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateSavedSearch(project string, savedSearch *SavedSearch) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateSavedSearch(project, savedSearch)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateSavedSearch(project string, savedSearch *SavedSearch) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateSavedSearch(project, savedSearch)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) DeleteSavedSearch(project string, savedSearchName string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteSavedSearch(project, savedSearchName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetSavedSearch(project string, savedSearchName string) (savedSearch *SavedSearch, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		savedSearch, err = c.logClient.GetSavedSearch(project, savedSearchName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) ListSavedSearch(project string, savedSearchName string, offset, size int) (savedSearches []string, total int, count int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		savedSearches, total, count, err = c.logClient.ListSavedSearch(project, savedSearchName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) CreateAlert(project string, alert *Alert) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.CreateAlert(project, alert)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) UpdateAlert(project string, alert *Alert) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.UpdateAlert(project, alert)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) DeleteAlert(project string, alertName string) (err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		err = c.logClient.DeleteAlert(project, alertName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) GetAlert(project string, alertName string) (alert *Alert, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		alert, err = c.logClient.GetAlert(project, alertName)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}
+
+func (c *TokenAutoUpdateClient) ListAlert(project string, alertName string, offset, size int) (alerts []string, total int, count int, err error) {
+	for i := 0; i < c.maxTryTimes; i++ {
+		alerts, total, count, err = c.logClient.ListAlert(project, alertName, offset, size)
+		if !c.processError(err) {
+			return
+		}
+	}
+	return
+}

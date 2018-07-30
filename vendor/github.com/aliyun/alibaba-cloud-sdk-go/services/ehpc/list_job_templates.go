@@ -77,8 +77,8 @@ func (client *Client) ListJobTemplatesWithCallback(request *ListJobTemplatesRequ
 type ListJobTemplatesRequest struct {
 	*requests.RpcRequest
 	Name       string           `position:"Query" name:"Name"`
-	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 	PageSize   requests.Integer `position:"Query" name:"PageSize"`
+	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // ListJobTemplatesResponse is the response struct for api ListJobTemplates
@@ -96,7 +96,7 @@ func CreateListJobTemplatesRequest() (request *ListJobTemplatesRequest) {
 	request = &ListJobTemplatesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "ListJobTemplates", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "ListJobTemplates", "ehs", "openAPI")
 	return
 }
 

@@ -76,11 +76,11 @@ func (client *Client) ListNodesWithCallback(request *ListNodesRequest, callback 
 // ListNodesRequest is the request struct for api ListNodes
 type ListNodesRequest struct {
 	*requests.RpcRequest
-	ClusterId  string           `position:"Query" name:"ClusterId"`
-	Role       string           `position:"Query" name:"Role"`
 	HostName   string           `position:"Query" name:"HostName"`
-	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
+	Role       string           `position:"Query" name:"Role"`
 	PageSize   requests.Integer `position:"Query" name:"PageSize"`
+	ClusterId  string           `position:"Query" name:"ClusterId"`
+	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // ListNodesResponse is the response struct for api ListNodes
@@ -98,7 +98,7 @@ func CreateListNodesRequest() (request *ListNodesRequest) {
 	request = &ListNodesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "ListNodes", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "ListNodes", "ehs", "openAPI")
 	return
 }
 

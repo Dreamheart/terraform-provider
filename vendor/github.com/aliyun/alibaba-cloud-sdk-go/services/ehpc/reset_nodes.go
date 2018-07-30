@@ -76,8 +76,8 @@ func (client *Client) ResetNodesWithCallback(request *ResetNodesRequest, callbac
 // ResetNodesRequest is the request struct for api ResetNodes
 type ResetNodesRequest struct {
 	*requests.RpcRequest
-	ClusterId string                `position:"Query" name:"ClusterId"`
 	Instance  *[]ResetNodesInstance `position:"Query" name:"Instance"  type:"Repeated"`
+	ClusterId string                `position:"Query" name:"ClusterId"`
 }
 
 // ResetNodesInstance is a repeated param struct in ResetNodesRequest
@@ -96,7 +96,7 @@ func CreateResetNodesRequest() (request *ResetNodesRequest) {
 	request = &ResetNodesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "ResetNodes", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "ResetNodes", "ehs", "openAPI")
 	return
 }
 

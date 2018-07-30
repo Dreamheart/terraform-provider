@@ -187,6 +187,7 @@ type DescribeLoadBalancersArgs struct {
 	Address            string
 	InternetChargeType InternetChargeType
 	ServerId           string
+	Tags               string
 }
 
 type ListenerPortAndProtocolType struct {
@@ -197,6 +198,7 @@ type ListenerPortAndProtocolType struct {
 type BackendServerType struct {
 	ServerId string
 	Weight   int
+	Type     string
 }
 
 type LoadBalancerType struct {

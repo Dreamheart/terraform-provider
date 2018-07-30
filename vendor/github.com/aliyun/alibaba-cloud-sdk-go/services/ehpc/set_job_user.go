@@ -76,9 +76,9 @@ func (client *Client) SetJobUserWithCallback(request *SetJobUserRequest, callbac
 // SetJobUserRequest is the request struct for api SetJobUser
 type SetJobUserRequest struct {
 	*requests.RpcRequest
-	ClusterId         string `position:"Query" name:"ClusterId"`
-	RunasUser         string `position:"Query" name:"RunasUser"`
 	RunasUserPassword string `position:"Query" name:"RunasUserPassword"`
+	RunasUser         string `position:"Query" name:"RunasUser"`
+	ClusterId         string `position:"Query" name:"ClusterId"`
 }
 
 // SetJobUserResponse is the response struct for api SetJobUser
@@ -92,7 +92,7 @@ func CreateSetJobUserRequest() (request *SetJobUserRequest) {
 	request = &SetJobUserRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "SetJobUser", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "SetJobUser", "ehs", "openAPI")
 	return
 }
 

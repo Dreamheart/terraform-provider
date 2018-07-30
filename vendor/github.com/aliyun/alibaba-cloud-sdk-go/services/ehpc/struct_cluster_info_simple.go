@@ -26,12 +26,14 @@ type ClusterInfoSimple struct {
 	OsTag           string         `json:"OsTag" xml:"OsTag"`
 	AccountType     string         `json:"AccountType" xml:"AccountType"`
 	SchedulerType   string         `json:"SchedulerType" xml:"SchedulerType"`
+	DeployMode      string         `json:"DeployMode" xml:"DeployMode"`
 	Count           int            `json:"Count" xml:"Count"`
 	InstanceType    string         `json:"InstanceType" xml:"InstanceType"`
 	LoginNodes      string         `json:"LoginNodes" xml:"LoginNodes"`
 	CreateTime      string         `json:"CreateTime" xml:"CreateTime"`
 	ImageOwnerAlias string         `json:"ImageOwnerAlias" xml:"ImageOwnerAlias"`
 	ImageId         string         `json:"ImageId" xml:"ImageId"`
+	Location        string         `json:"Location" xml:"Location"`
 	Managers        Managers       `json:"Managers" xml:"Managers"`
 	Computes        Computes       `json:"Computes" xml:"Computes"`
 	TotalResources  TotalResources `json:"TotalResources" xml:"TotalResources"`

@@ -76,8 +76,8 @@ func (client *Client) UpgradeClientWithCallback(request *UpgradeClientRequest, c
 // UpgradeClientRequest is the request struct for api UpgradeClient
 type UpgradeClientRequest struct {
 	*requests.RpcRequest
-	ClusterId     string `position:"Query" name:"ClusterId"`
 	ClientVersion string `position:"Query" name:"ClientVersion"`
+	ClusterId     string `position:"Query" name:"ClusterId"`
 }
 
 // UpgradeClientResponse is the response struct for api UpgradeClient
@@ -91,7 +91,7 @@ func CreateUpgradeClientRequest() (request *UpgradeClientRequest) {
 	request = &UpgradeClientRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "UpgradeClient", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "UpgradeClient", "ehs", "openAPI")
 	return
 }
 

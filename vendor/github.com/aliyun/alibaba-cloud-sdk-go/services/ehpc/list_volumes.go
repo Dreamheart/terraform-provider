@@ -76,8 +76,8 @@ func (client *Client) ListVolumesWithCallback(request *ListVolumesRequest, callb
 // ListVolumesRequest is the request struct for api ListVolumes
 type ListVolumesRequest struct {
 	*requests.RpcRequest
-	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 	PageSize   requests.Integer `position:"Query" name:"PageSize"`
+	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // ListVolumesResponse is the response struct for api ListVolumes
@@ -95,7 +95,7 @@ func CreateListVolumesRequest() (request *ListVolumesRequest) {
 	request = &ListVolumesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "ListVolumes", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "ListVolumes", "ehs", "openAPI")
 	return
 }
 

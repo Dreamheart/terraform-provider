@@ -76,8 +76,8 @@ func (client *Client) ListClustersWithCallback(request *ListClustersRequest, cal
 // ListClustersRequest is the request struct for api ListClusters
 type ListClustersRequest struct {
 	*requests.RpcRequest
-	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 	PageSize   requests.Integer `position:"Query" name:"PageSize"`
+	PageNumber requests.Integer `position:"Query" name:"PageNumber"`
 }
 
 // ListClustersResponse is the response struct for api ListClusters
@@ -95,7 +95,7 @@ func CreateListClustersRequest() (request *ListClustersRequest) {
 	request = &ListClustersRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "ListClusters", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "ListClusters", "ehs", "openAPI")
 	return
 }
 

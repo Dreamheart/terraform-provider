@@ -76,19 +76,25 @@ func (client *Client) AddNodesWithCallback(request *AddNodesRequest, callback fu
 // AddNodesRequest is the request struct for api AddNodes
 type AddNodesRequest struct {
 	*requests.RpcRequest
-	ClusterId             string           `position:"Query" name:"ClusterId"`
-	ImageOwnerAlias       string           `position:"Query" name:"ImageOwnerAlias"`
+	AutoRenewPeriod       requests.Integer `position:"Query" name:"AutoRenewPeriod"`
+	Period                requests.Integer `position:"Query" name:"Period"`
 	ImageId               string           `position:"Query" name:"ImageId"`
 	Count                 requests.Integer `position:"Query" name:"Count"`
+	ClusterId             string           `position:"Query" name:"ClusterId"`
 	ComputeSpotStrategy   string           `position:"Query" name:"ComputeSpotStrategy"`
+	ImageOwnerAlias       string           `position:"Query" name:"ImageOwnerAlias"`
+	PeriodUnit            string           `position:"Query" name:"PeriodUnit"`
+	AutoRenew             string           `position:"Query" name:"AutoRenew"`
+	EcsChargeType         string           `position:"Query" name:"EcsChargeType"`
+	InstanceType          string           `position:"Query" name:"InstanceType"`
 	ComputeSpotPriceLimit string           `position:"Query" name:"ComputeSpotPriceLimit"`
 }
 
 // AddNodesResponse is the response struct for api AddNodes
 type AddNodesResponse struct {
 	*responses.BaseResponse
-	RequestId   string      `json:"RequestId" xml:"RequestId"`
-	InstanceIds InstanceIds `json:"InstanceIds" xml:"InstanceIds"`
+	RequestId   string                `json:"RequestId" xml:"RequestId"`
+	InstanceIds InstanceIdsInAddNodes `json:"InstanceIds" xml:"InstanceIds"`
 }
 
 // CreateAddNodesRequest creates a request to invoke AddNodes API
@@ -96,7 +102,7 @@ func CreateAddNodesRequest() (request *AddNodesRequest) {
 	request = &AddNodesRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("EHPC", "2017-07-14", "AddNodes", "ehs", "openAPI")
+	request.InitWithApiInfo("EHPC", "2018-04-12", "AddNodes", "ehs", "openAPI")
 	return
 }
 
