@@ -7,12 +7,13 @@ import (
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors"
 	"github.com/aliyun/aliyun-log-go-sdk"
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/denverdino/aliyungo/common"
 )
 
 const (
 	// common
-	Notfound       = "Not found"
+	NotFound       = "NotFound"
 	WaitForTimeout = "WaitForTimeout"
 	// ecs
 	InstanceNotFound        = "Instance.Notfound"
@@ -26,6 +27,11 @@ const (
 	InstanceIncorrectStatus    = "IncorrectInstanceStatus"
 	HaVipIncorrectStatus       = "IncorrectHaVipStatus"
 	COMMODITYINVALID_COMPONENT = "COMMODITY.INVALID_COMPONENT"
+	// eni
+	DetachPrimaryEniNotAllowed = "InvalidOperation.DetachPrimaryEniNotAllowed"
+	InvalidEniType				= "InvalidOperation.InvalidEniType"
+	InvalidEniState 			= "InvalidOperation.InvalidEniState"
+	InvalidEcsState				= "InvalidOperation.InvalidEcsState"
 	// slb
 	LoadBalancerNotFound        = "InvalidLoadBalancerId.NotFound"
 	UnsupportedProtocalPort     = "UnsupportedOperationonfixedprotocalport"
@@ -52,6 +58,7 @@ const (
 	VpcQuotaExceeded     = "QuotaExceeded.Vpc"
 	InvalidVpcIDNotFound = "InvalidVpcID.NotFound"
 	ForbiddenVpcNotFound = "Forbidden.VpcNotFound"
+	Throttling           = "Throttling"
 
 	// vswitch
 	VswitcInvalidRegionId    = "InvalidRegionId.NotFound"
@@ -86,15 +93,16 @@ const (
 	NetTypeExists                          = "NetTypeExists"
 	InvalidAccountNameDuplicate            = "InvalidAccountName.Duplicate"
 	InvalidAccountNameNotFound             = "InvalidAccountName.NotFound"
-	OperationDeniedDBInstanceStatus        = "OperationDenied.DBInstanceStatus"
 	InvalidConnectionStringDuplicate       = "InvalidConnectionString.Duplicate"
 	AtLeastOneNetTypeExists                = "AtLeastOneNetTypeExists"
 	ConnectionOperationDenied              = "OperationDenied"
 	ConnectionConflictMessage              = "The requested resource is sold out in the specified zone; try other types of resources or other regions and zones"
 	DBInternalError                        = "InternalError"
 	// oss
-	OssBucketNotFound = "NoSuchBucket"
-	OssBodyNotFound   = "404 Not Found"
+	OssBucketNotFound          = "NoSuchBucket"
+	OssBodyNotFound            = "404 Not Found"
+	NoSuchCORSConfiguration    = "NoSuchCORSConfiguration"
+	NoSuchWebsiteConfiguration = "NoSuchWebsiteConfiguration"
 
 	// RAM Instance Not Found
 	RamInstanceNotFound   = "Forbidden.InstanceNotFound"
@@ -104,6 +112,8 @@ const (
 	RecordForbiddenDNSChange    = "RecordForbidden.DNSChange"
 	FobiddenNotEmptyGroup       = "Fobidden.NotEmptyGroup"
 	DomainRecordNotBelongToUser = "DomainRecordNotBelongToUser"
+	InvalidDomainNotFound       = "InvalidDomain.NotFound"
+	InvalidDomainNameNoExist    = "InvalidDomainName.NoExist"
 
 	// ram user
 	DeleteConflictUserGroup        = "DeleteConflict.User.Group"
@@ -164,11 +174,15 @@ const (
 	InternalServerError  = "InternalServerError"
 	GroupNotExist        = "GroupNotExist"
 	MachineGroupNotExist = "MachineGroupNotExist"
+
+	// OTS
+	OTSObjectNotExist = "OTSObjectNotExist"
 )
 
 var SlbIsBusy = []string{"SystemBusy", "OperationBusy", "ServiceIsStopping", "BackendServer.configuring", "ServiceIsConfiguring"}
 var EcsNotFound = []string{"InvalidInstanceId.NotFound", "Forbidden.InstanceNotFound"}
 var DiskInvalidOperation = []string{"IncorrectDiskStatus", "IncorrectInstanceStatus", "OperationConflict", InternalError, "InvalidOperation.Conflict", "IncorrectDiskStatus.Initializing"}
+var OperationDeniedDBStatus = []string{"OperationDenied.DBStatus", "OperationDenied.DBInstanceStatus", DBInternalError}
 
 // An Error represents a custom error for Terraform failure response
 type ProviderError struct {
@@ -197,19 +211,19 @@ func GetNotFoundErrorFromString(str string) error {
 
 func NotFoundError(err error) bool {
 	if e, ok := err.(*common.Error); ok &&
-		(e.Code == InstanceNotFound || e.Code == RamInstanceNotFound ||
+		(e.Code == InstanceNotFound || e.Code == RamInstanceNotFound || e.Code == NotFound ||
 			strings.Contains(strings.ToLower(e.Message), MessageInstanceNotFound)) {
 		return true
 	}
 
 	if e, ok := err.(*errors.ServerError); ok &&
-		(e.ErrorCode() == InstanceNotFound || e.ErrorCode() == RamInstanceNotFound ||
+		(e.ErrorCode() == InstanceNotFound || e.ErrorCode() == RamInstanceNotFound || e.ErrorCode() == NotFound ||
 			strings.Contains(strings.ToLower(e.Message()), MessageInstanceNotFound)) {
 		return true
 	}
 
 	if e, ok := err.(*ProviderError); ok &&
-		(e.ErrorCode() == InstanceNotFound || e.ErrorCode() == RamInstanceNotFound ||
+		(e.ErrorCode() == InstanceNotFound || e.ErrorCode() == RamInstanceNotFound || e.ErrorCode() == NotFound ||
 			strings.Contains(strings.ToLower(e.Message()), MessageInstanceNotFound)) {
 		return true
 	}
@@ -233,6 +247,10 @@ func IsExceptedError(err error, expectCode string) bool {
 	if e, ok := err.(*sls.Error); ok && (e.Code == expectCode || strings.Contains(e.Message, expectCode)) {
 		return true
 	}
+
+	if e, ok := err.(oss.ServiceError); ok && (e.Code == expectCode || strings.Contains(e.Message, expectCode)) {
+		return true
+	}
 	return false
 }
 
@@ -250,6 +268,9 @@ func IsExceptedErrors(err error, expectCodes []string) bool {
 			return true
 		}
 		if e, ok := err.(*sls.Error); ok && (e.Code == code || strings.Contains(e.Message, code)) {
+			return true
+		}
+		if e, ok := err.(oss.ServiceError); ok && (e.Code == code || strings.Contains(e.Message, code)) {
 			return true
 		}
 	}

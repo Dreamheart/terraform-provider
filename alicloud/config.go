@@ -17,11 +17,11 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ess"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/ots"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/rds"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/aliyun/aliyun-log-go-sdk"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
-	"github.com/aliyun/aliyun-tablestore-go-sdk/tablestore"
 	"github.com/denverdino/aliyungo/cdn"
 	"github.com/denverdino/aliyungo/common"
 	"github.com/denverdino/aliyungo/cs"
@@ -49,21 +49,25 @@ type Config struct {
 type AliyunClient struct {
 	Region   common.Region
 	RegionId string
-	ecsconn  *ecs.Client
-	essconn  *ess.Client
-	rdsconn  *rds.Client
-	vpcconn  *vpc.Client
-	slbconn  *slb.Client
-	ossconn  *oss.Client
-	dnsconn  *dns.Client
-	ramconn  ram.RamClientInterface
-	csconn   *cs.Client
-	cdnconn  *cdn.CdnClient
-	kmsconn  *kms.Client
-	otsconn  *tablestore.TableStoreClient
-	cmsconn  *cms.Client
-	logconn  *sls.Client
-	onsconn  *ons.Client
+	//In order to build ots table client, add accesskey and secretkey in aliyunclient temporarily.
+	AccessKey       string
+	SecretKey       string
+	OtsInstanceName string
+	ecsconn         *ecs.Client
+	essconn         *ess.Client
+	rdsconn         *rds.Client
+	vpcconn         *vpc.Client
+	slbconn         *slb.Client
+	ossconn         *oss.Client
+	dnsconn         *dns.Client
+	ramconn         ram.RamClientInterface
+	csconn          *cs.Client
+	cdnconn         *cdn.CdnClient
+	kmsconn         *kms.Client
+	otsconn         *ots.Client
+	cmsconn         *cms.Client
+	logconn         *sls.Client
+  onsconn         *ons.Client
 }
 
 // Client for AliyunClient
@@ -134,23 +138,26 @@ func (c *Config) Client() (*AliyunClient, error) {
 		return nil, err
 	}
 	return &AliyunClient{
-		Region:   c.Region,
-		RegionId: c.RegionId,
-		ecsconn:  ecsconn,
-		vpcconn:  vpcconn,
-		slbconn:  slbconn,
-		rdsconn:  rdsconn,
-		essconn:  essconn,
-		ossconn:  ossconn,
-		dnsconn:  dnsconn,
-		ramconn:  ramconn,
-		csconn:   csconn,
-		cdnconn:  cdnconn,
-		kmsconn:  kmsconn,
-		otsconn:  otsconn,
-		cmsconn:  cmsconn,
-		logconn:  c.logConn(),
-		onsconn:  onsconn,
+		Region:          c.Region,
+		RegionId:        c.RegionId,
+		AccessKey:       c.AccessKey,
+		SecretKey:       c.SecretKey,
+		OtsInstanceName: c.OtsInstanceName,
+		ecsconn:         ecsconn,
+		vpcconn:         vpcconn,
+		slbconn:         slbconn,
+		rdsconn:         rdsconn,
+		essconn:         essconn,
+		ossconn:         ossconn,
+		dnsconn:         dnsconn,
+		ramconn:         ramconn,
+		csconn:          csconn,
+		cdnconn:         cdnconn,
+		kmsconn:         kmsconn,
+		otsconn:         otsconn,
+		cmsconn:         cmsconn,
+		logconn:         c.logConn(),
+		onsconn:         onsconn,
 	}, nil
 }
 
@@ -229,27 +236,33 @@ func (c *Config) essConn() (*ess.Client, error) {
 func (c *Config) ossConn() (*oss.Client, error) {
 	endpoint := LoadEndpoint(c.RegionId, OSSCode)
 
-	if endpoint == "" {
-		endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
-		endpointClient.SetSecurityToken(c.SecurityToken)
-		args := &location.DescribeEndpointsArgs{
-			Id:          c.Region,
-			ServiceCode: "oss",
-			Type:        "openAPI",
-		}
-
-		endpoints, err := endpointClient.DescribeEndpoints(args)
+	endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
+	endpointClient.SetSecurityToken(c.SecurityToken)
+	args := &location.DescribeEndpointsArgs{
+		Id:          c.Region,
+		ServiceCode: "oss",
+		Type:        "openAPI",
+	}
+	invoker := NewInvoker()
+	var endpoints *location.DescribeEndpointsResponse
+	if err := invoker.Run(func() error {
+		es, err := endpointClient.DescribeEndpoints(args)
 		if err != nil {
-			return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
+			return err
 		}
-		endpointItem := endpoints.Endpoints.Endpoint
-		var endpoint string
-		if endpointItem == nil || len(endpointItem) <= 0 {
-			log.Printf("Cannot find endpoint in the region: %#v", c.Region)
-			endpoint = ""
-		} else {
-			endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
-		}
+		endpoints = es
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
+	}
+	endpointItem := endpoints.Endpoints.Endpoint
+	var endpoint string
+	if endpointItem == nil || len(endpointItem) <= 0 {
+		log.Printf("Cannot find endpoint in the region: %#v", c.Region)
+		endpoint = ""
+	} else {
+		endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
+	}
 
 		if endpoint == "" {
 			endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
@@ -294,17 +307,12 @@ func (c *Config) kmsConn() (*kms.Client, error) {
 	return client, nil
 }
 
-func (c *Config) otsConn() (*tablestore.TableStoreClient, error) {
+func (c *Config) otsConn() (*ots.Client, error) {
 	endpoint := LoadEndpoint(c.RegionId, OTSCode)
-	instanceName := c.OtsInstanceName
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("%s.%s.ots.aliyuncs.com", instanceName, c.RegionId)
+	if endpoint != "" {
+		endpoints.AddEndpointMapping(c.RegionId, string(OTSCode), endpoint)
 	}
-	if !strings.HasPrefix(endpoint, string(Https)) && !strings.HasPrefix(endpoint, string(Http)) {
-		endpoint = fmt.Sprintf("%s://%s", Https, endpoint)
-	}
-	client := tablestore.NewClient(endpoint, instanceName, c.AccessKey, c.SecretKey)
-	return client, nil
+	return ots.NewClientWithOptions(c.RegionId, getSdkConfig(), c.getAuthCredential(true))
 }
 
 func (c *Config) cmsConn() (*cms.Client, error) {
