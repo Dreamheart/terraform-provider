@@ -329,7 +329,7 @@ func resourceAlicloudCSKubernetesUpdate(d *schema.ResourceData, meta interface{}
 func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*AliyunClient)
 
-	var cluster cs.ClusterType
+	var cluster cs.ClusterDetailType
 	invoker := NewInvoker()
 	if err := invoker.Run(func() error {
 		c, e := client.csconn.DescribeCluster(d.Id())
@@ -513,7 +513,7 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 func resourceAlicloudCSKubernetesDelete(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*AliyunClient).csconn
 	invoker := NewInvoker()
-	var cluster cs.ClusterType
+	var cluster cs.ClusterDetailType
 	return resource.Retry(5*time.Minute, func() *resource.RetryError {
 		if err := invoker.Run(func() error {
 			return conn.DeleteCluster(d.Id())

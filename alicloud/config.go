@@ -234,39 +234,43 @@ func (c *Config) essConn() (*ess.Client, error) {
 	return ess.NewClientWithOptions(c.RegionId, getSdkConfig(), c.getAuthCredential(true))
 }
 func (c *Config) ossConn() (*oss.Client, error) {
-	endpoint := LoadEndpoint(c.RegionId, OSSCode)
-
-	endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
-	endpointClient.SetSecurityToken(c.SecurityToken)
-	args := &location.DescribeEndpointsArgs{
-		Id:          c.Region,
-		ServiceCode: "oss",
-		Type:        "openAPI",
-	}
-	invoker := NewInvoker()
-	var endpoints *location.DescribeEndpointsResponse
-	if err := invoker.Run(func() error {
-		es, err := endpointClient.DescribeEndpoints(args)
-		if err != nil {
-			return err
-		}
-		endpoints = es
-		return nil
-	}); err != nil {
-		return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
-	}
-	endpointItem := endpoints.Endpoints.Endpoint
 	var endpoint string
-	if endpointItem == nil || len(endpointItem) <= 0 {
-		log.Printf("Cannot find endpoint in the region: %#v", c.Region)
-		endpoint = ""
-	} else {
-		endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
+	endpoint = os.Getenv("OSS_ENDPOINT")
+
+	if endpoint == "" {
+
+		endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
+		endpointClient.SetSecurityToken(c.SecurityToken)
+		args := &location.DescribeEndpointsArgs{
+			Id:          c.Region,
+			ServiceCode: "oss",
+			Type:        "openAPI",
+		}
+		invoker := NewInvoker()
+		var endpoints *location.DescribeEndpointsResponse
+		if err := invoker.Run(func() error {
+			es, err := endpointClient.DescribeEndpoints(args)
+			if err != nil {
+				return err
+			}
+			endpoints = es
+			return nil
+		}); err != nil {
+			return nil, fmt.Errorf("Describe endpoint using region: %#v got an error: %#v.", c.Region, err)
+		}
+		endpointItem := endpoints.Endpoints.Endpoint
+
+		if endpointItem == nil || len(endpointItem) <= 0 {
+			log.Printf("Cannot find endpoint in the region: %#v", c.Region)
+			endpoint = ""
+		} else {
+			endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
+		}
+
 	}
 
-		if endpoint == "" {
-			endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
-		}
+	if endpoint == "" {
+		endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
 	}
 
 	log.Printf("[DEBUG] Instantiate OSS client using endpoint: %#v", endpoint)
