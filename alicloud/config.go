@@ -30,6 +30,7 @@ import (
 	"github.com/denverdino/aliyungo/location"
 	"github.com/denverdino/aliyungo/ram"
 	"github.com/denverdino/aliyungo/slb"
+	"github.com/Dreamheart/apsarastack-mq-go-sdk/service/ons"
 	"github.com/hashicorp/terraform/terraform"
 )
 
@@ -66,6 +67,7 @@ type AliyunClient struct {
 	otsconn         *ots.Client
 	cmsconn         *cms.Client
 	logconn         *sls.Client
+  onsconn         *ons.Client
 }
 
 // Client for AliyunClient
@@ -131,6 +133,10 @@ func (c *Config) Client() (*AliyunClient, error) {
 	if err != nil {
 		return nil, err
 	}
+	onsconn, err := c.onsConn()
+	if err != nil {
+		return nil, err
+	}
 	return &AliyunClient{
 		Region:          c.Region,
 		RegionId:        c.RegionId,
@@ -151,6 +157,7 @@ func (c *Config) Client() (*AliyunClient, error) {
 		otsconn:         otsconn,
 		cmsconn:         cmsconn,
 		logconn:         c.logConn(),
+		onsconn:         onsconn,
 	}, nil
 }
 
@@ -166,6 +173,9 @@ func (c *Config) loadAndValidate() error {
 }
 
 func (c *Config) validateRegion() error {
+	if os.Getenv("ALICLOUD_SKIP_CHECK_REGION") != ""{
+		return nil
+	}
 
 	for _, valid := range common.ValidRegions {
 		if c.Region == valid {
@@ -224,6 +234,7 @@ func (c *Config) essConn() (*ess.Client, error) {
 	return ess.NewClientWithOptions(c.RegionId, getSdkConfig(), c.getAuthCredential(true))
 }
 func (c *Config) ossConn() (*oss.Client, error) {
+	endpoint := LoadEndpoint(c.RegionId, OSSCode)
 
 	endpointClient := location.NewClient(c.AccessKey, c.SecretKey)
 	endpointClient.SetSecurityToken(c.SecurityToken)
@@ -253,8 +264,9 @@ func (c *Config) ossConn() (*oss.Client, error) {
 		endpoint = strings.ToLower(endpointItem[0].Protocols.Protocols[0]) + "://" + endpointItem[0].Endpoint
 	}
 
-	if endpoint == "" {
-		endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
+		if endpoint == "" {
+			endpoint = fmt.Sprintf("http://oss-%s.aliyuncs.com", c.Region)
+		}
 	}
 
 	log.Printf("[DEBUG] Instantiate OSS client using endpoint: %#v", endpoint)
@@ -323,6 +335,18 @@ func (c *Config) logConn() *sls.Client {
 		SecurityToken:   c.SecurityToken,
 		UserAgent:       getUserAgent(),
 	}
+}
+
+func (c *Config) onsConn() (*ons.Client, error){
+	endpoint := os.Getenv("ONS_ENDPOINT")
+	if endpoint == "" {
+		endpoint = "https://" + "ons." + c.RegionId + ".aliyuncs.com"
+	}
+	client, err:= ons.NewClient(c.AccessKey, c.SecretKey, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 func getSdkConfig() *sdk.Config {

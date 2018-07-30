@@ -3,14 +3,14 @@ package alicloud
 import (
 	"fmt"
 	"time"
-
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
-	"github.com/denverdino/aliyungo/common"
 	"github.com/denverdino/aliyungo/cs"
 	"github.com/denverdino/aliyungo/ecs"
 	"github.com/denverdino/aliyungo/slb"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"strings"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/log"
 )
 
 func resourceAlicloudCSKubernetes() *schema.Resource {
@@ -114,11 +114,11 @@ func resourceAlicloudCSKubernetes() *schema.Resource {
 				ValidateFunc: validateAllowedStringValue([]string{
 					string(ecs.DiskCategoryCloudEfficiency), string(ecs.DiskCategoryCloudSSD)}),
 			},
-			"install_cloud_monitor": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
+			//"install_cloud_monitor": &schema.Schema{
+			//	Type:     schema.TypeBool,
+			//	Optional: true,
+			//	Default:  false,
+			//},
 			"is_outdated": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -153,46 +153,46 @@ func resourceAlicloudCSKubernetes() *schema.Resource {
 				Elem:       &schema.Schema{Type: schema.TypeString},
 				Deprecated: "Field 'nodes' has been deprecated from provider version 1.9.4. New field 'master_nodes' replaces it.",
 			},
-			"master_nodes": &schema.Schema{
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"private_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
-			"worker_nodes": &schema.Schema{
-				Type:     schema.TypeList,
-				Computed: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"id": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"private_ip": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
-				},
-			},
+			//"master_nodes": &schema.Schema{
+			//	Type:     schema.TypeList,
+			//	Computed: true,
+			//	Elem: &schema.Resource{
+			//		Schema: map[string]*schema.Schema{
+			//			"id": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//			"name": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//			"private_ip": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//		},
+			//	},
+			//},
+			//"worker_nodes": &schema.Schema{
+			//	Type:     schema.TypeList,
+			//	Computed: true,
+			//	Elem: &schema.Resource{
+			//		Schema: map[string]*schema.Schema{
+			//			"id": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//			"name": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//			"private_ip": {
+			//				Type:     schema.TypeString,
+			//				Computed: true,
+			//			},
+			//		},
+			//	},
+			//},
 			"connections": &schema.Schema{
 				Type:     schema.TypeMap,
 				Computed: true,
@@ -346,6 +346,15 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 
+	master_instance_id := ""
+	for _,item := range cluster.Outputs{
+		log.Print("[DEBUG] ====>>Key: %s\n           OUTPUT.VAL : %v", item.Key, item.Val)
+		if item.Key == "MasterInstanceIDs"{
+			master_instance_id = item.Val.([]interface{})[0].(string)
+			break
+		}
+	}
+
 	d.Set("name", cluster.Name)
 	// Each k8s cluster contains 3 master nodes
 	d.Set("worker_number", cluster.Size-KubernetesMasterNumber)
@@ -353,99 +362,82 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 	d.Set("vpc_id", cluster.VPCID)
 	d.Set("security_group_id", cluster.SecurityGroupID)
 
-	var masterNodes []map[string]interface{}
-	var workerNodes []map[string]interface{}
-	var master, worker cs.KubernetesNodeType
-	var workerId string
+	//var masterNodes []map[string]interface{}
+	//var workerNodes []map[string]interface{}
+	//var master, worker cs.KubernetesNodeType
+	//
+	//pageNumber := 1
+	//for {
+	//	result, pagination, err := client.csconn.GetKubernetesClusterNodes(d.Id(), common.Pagination{PageNumber: pageNumber, PageSize: 50})
+	//	if err != nil {
+	//		return fmt.Errorf("[ERROR] GetKubernetesClusterNodes got an error: %#v.", err)
+	//	}
+	//
+	//	if pageNumber == 1 && (len(result) == 0 || result[0].InstanceId == "") {
+	//		err := resource.Retry(2*time.Minute, func() *resource.RetryError {
+	//			tmp, _, err := client.csconn.GetKubernetesClusterNodes(d.Id(), common.Pagination{PageNumber: pageNumber, PageSize: 50})
+	//			if err != nil {
+	//				return resource.NonRetryableError(fmt.Errorf("[ERROR] GetKubernetesClusterNodes got an error: %#v.", err))
+	//			}
+	//			if len(result) > 0 && result[0].InstanceId != "" {
+	//				result = tmp
+	//				return nil
+	//			}
+	//			return resource.RetryableError(fmt.Errorf("[ERROR] There is no any nodes in kubernetes cluster %s.", d.Id()))
+	//		})
+	//		if err != nil {
+	//			return err
+	//		}
+	//
+	//	}
+	//
+	//	for _, node := range result {
+	//		mapping := map[string]interface{}{
+	//			"id":         node.InstanceId,
+	//			"name":       node.InstanceName,
+	//			"private_ip": node.IpAddress[0],
+	//		}
+	//		if node.InstanceRole == "Master" {
+	//			master = node
+	//			masterNodes = append(masterNodes, mapping)
+	//		} else {
+	//			worker = node
+	//			workerNodes = append(workerNodes, mapping)
+	//		}
+	//	}
+	//
+	//	if len(result) < pagination.PageSize {
+	//		break
+	//	}
+	//	pageNumber += 1
+	//}
+	//d.Set("master_nodes", masterNodes)
+	//d.Set("worker_nodes", workerNodes)
+	//
+	//d.Set("master_instance_type", master.InstanceType)
+	//if disks, err := client.DescribeDisksByType(master.InstanceId, DiskTypeSystem); err != nil {
+	//	return fmt.Errorf("[ERROR] DescribeDisks By Id %s: %#v.", master.InstanceId, err)
+	//} else if len(disks) > 0 {
+	//	d.Set("master_disk_size", disks[0].Size)
+	//	d.Set("master_disk_category", disks[0].Category)
+	//	d.Set("availability_zone", disks[0].ZoneId)
+	//}
+	//
+	//d.Set("worker_instance_type", worker.InstanceType)
+	//if disks, err := client.DescribeDisksByType(worker.InstanceId, DiskTypeSystem); err != nil {
+	//	return fmt.Errorf("[ERROR] DescribeDisks By Id %s: %#v.", worker.InstanceId, err)
+	//} else if len(disks) > 0 {
+	//	d.Set("worker_disk_size", disks[0].Size)
+	//	d.Set("worker_disk_category", disks[0].Category)
+	//}
 
-	pageNumber := 1
-	for {
-		var result []cs.KubernetesNodeType
-		var pagination *cs.PaginationResult
-
-		if err := invoker.Run(func() error {
-			r, p, e := client.csconn.GetKubernetesClusterNodes(d.Id(), common.Pagination{PageNumber: pageNumber, PageSize: PageSizeLarge})
-			if e != nil {
-				return e
-			}
-			result = r
-			pagination = p
-			return nil
-		}); err != nil {
-			return fmt.Errorf("[ERROR] GetKubernetesClusterNodes got an error: %#v.", err)
-		}
-
-		if pageNumber == 1 && (len(result) == 0 || result[0].InstanceId == "") {
-			err := resource.Retry(5*time.Minute, func() *resource.RetryError {
-				if err := invoker.Run(func() error {
-					tmp, _, e := client.csconn.GetKubernetesClusterNodes(d.Id(), common.Pagination{PageNumber: pageNumber, PageSize: PageSizeLarge})
-					if e != nil {
-						return e
-					}
-					if len(tmp) > 0 && tmp[0].InstanceId != "" {
-						result = tmp
-					}
-					return nil
-				}); err != nil {
-					return resource.NonRetryableError(fmt.Errorf("[ERROR] GetKubernetesClusterNodes got an error: %#v.", err))
-				}
-				time.Sleep(5 * time.Second)
-				return resource.RetryableError(fmt.Errorf("[ERROR] There is no any nodes in kubernetes cluster %s.", d.Id()))
-			})
-			if err != nil {
-				return err
-			}
-
-		}
-
-		for _, node := range result {
-			mapping := map[string]interface{}{
-				"id":         node.InstanceId,
-				"name":       node.InstanceName,
-				"private_ip": node.IpAddress[0],
-			}
-			if node.InstanceRole == "Master" {
-				master = node
-				masterNodes = append(masterNodes, mapping)
-			} else {
-				if workerId == "" {
-					workerId = node.InstanceId
-				}
-				worker = node
-				workerNodes = append(workerNodes, mapping)
-			}
-		}
-
-		if len(result) < pagination.PageSize {
-			break
-		}
-		pageNumber += 1
-	}
-	d.Set("master_nodes", masterNodes)
-	d.Set("worker_nodes", workerNodes)
-
-	d.Set("master_instance_type", master.InstanceType)
-	if disks, err := client.DescribeDisksByType(master.InstanceId, DiskTypeSystem); err != nil {
-		return fmt.Errorf("[ERROR] DescribeDisks By Id %s: %#v.", master.InstanceId, err)
-	} else if len(disks) > 0 {
-		d.Set("master_disk_size", disks[0].Size)
-		d.Set("master_disk_category", disks[0].Category)
-		d.Set("availability_zone", disks[0].ZoneId)
-	}
-
-	d.Set("worker_instance_type", worker.InstanceType)
-	// worker.InstanceId will be empty in sometimes
-
-	if disks, err := client.DescribeDisksByType(workerId, DiskTypeSystem); err != nil {
-		return fmt.Errorf("[ERROR] DescribeDisks By Id %s: %#v.", workerId, err)
-	} else if len(disks) > 0 {
-		d.Set("worker_disk_size", disks[0].Size)
-		d.Set("worker_disk_category", disks[0].Category)
+	if master_instance_id == "" {
+		return fmt.Errorf("[ERROR] Cluster master instance id is null")
 	}
 
 	if cluster.SecurityGroupID == "" {
-		if inst, err := client.DescribeInstanceAttribute(workerId); err != nil {
-			return fmt.Errorf("[ERROR] DescribeInstanceAttribute %s got an error: %#v.", workerId, err)
+		if inst, err := client.DescribeInstanceAttribute(master_instance_id); err != nil {
+			return fmt.Errorf("[ERROR] DescribeInstanceAttribute %s got an error: %#v.", master_instance_id, err)
 		} else {
 			d.Set("security_group_id", inst.SecurityGroupIds.SecurityGroupId[0])
 		}
@@ -455,10 +447,10 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 	connection := make(map[string]string)
 	lbs, err := client.slbconn.DescribeLoadBalancers(&slb.DescribeLoadBalancersArgs{
 		RegionId: getRegion(d, meta),
-		ServerId: master.InstanceId,
+		ServerId: master_instance_id,
 	})
 	if err != nil {
-		return fmt.Errorf("[ERROR] DescribeLoadBalancers by server id %s got an error: %#v.", workerId, err)
+		return fmt.Errorf("[ERROR] DescribeLoadBalancers by server id %s got an error: %#v.", master_instance_id, err)
 	}
 	for _, lb := range lbs {
 		if lb.AddressType == slb.InternetAddressType {
@@ -505,23 +497,15 @@ func resourceAlicloudCSKubernetesRead(d *schema.ResourceData, meta interface{}) 
 	}); err != nil {
 		return fmt.Errorf("Get Cluster %s Certs got an error: %#v.", d.Id(), err)
 	}
-
-	var config cs.ClusterConfig
-	if file, ok := d.GetOk("kube_config"); ok && file.(string) != "" {
-		if err := invoker.Run(func() error {
-			c, e := client.csconn.GetClusterConfig(d.Id())
-			if e != nil {
-				return e
-			}
-			config = c
-			return nil
-		}); err != nil {
-			return fmt.Errorf("GetClusterConfig got an error: %#v.", err)
-		}
-		if err := writeToFile(file.(string), config.Config); err != nil {
-			return err
-		}
-	}
+	//if file, ok := d.GetOk("kube_config"); ok && file.(string) != "" {
+	//	config, err := client.csconn.GetClusterConfig(d.Id())
+	//	if err != nil {
+	//		return fmt.Errorf("GetClusterConfig got an error: %#v.", err)
+	//	}
+	//	if err := writeToFile(file.(string), config.Config); err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }
@@ -569,16 +553,27 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 	client := meta.(*AliyunClient)
 
 	// Ensure instance_type is valid
-	zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
-	if err != nil {
-		return nil, err
-	}
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("master_instance_type").(string), zoneId, validZones); err != nil {
-		return nil, err
-	}
+	zoneId := ""
+	if IsSkipResourceCheck() == false {
+		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
+		if err != nil {
+			return nil, err
+		}
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("master_instance_type").(string), zoneId, validZones); err != nil {
+			return nil, err
+		}
 
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("worker_instance_type").(string), zoneId, validZones); err != nil {
-		return nil, err
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("worker_instance_type").(string), zoneId, validZones); err != nil {
+			return nil, err
+		}
+	}else{
+		if v, ok := d.GetOk("availability_zone"); ok && strings.TrimSpace(v.(string)) != "" {
+			zoneId = strings.TrimSpace(v.(string))
+		} else if v, ok := d.GetOk("vswitch_id"); ok && strings.TrimSpace(v.(string)) != "" {
+			if vsw, err := meta.(*AliyunClient).DescribeVswitch(strings.TrimSpace(v.(string))); err == nil {
+				zoneId = vsw.ZoneId
+			}
+		}
 	}
 
 	var clusterName string
@@ -597,13 +592,13 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 		MasterSystemDiskSize:     int64(d.Get("master_disk_size").(int)),
 		WorkerSystemDiskCategory: ecs.DiskCategory(d.Get("worker_disk_category").(string)),
 		WorkerSystemDiskSize:     int64(d.Get("worker_disk_size").(int)),
-		SNatEntry:                d.Get("new_nat_gateway").(bool),
+		//SNatEntry:                d.Get("new_nat_gateway").(bool),
 		KubernetesVersion:        d.Get("version").(string),
 		ContainerCIDR:            d.Get("pod_cidr").(string),
 		ServiceCIDR:              d.Get("service_cidr").(string),
 		SSHFlags:                 d.Get("enable_ssh").(bool),
 		ImageID:                  KubernetesImageId,
-		CloudMonitorFlags:        d.Get("install_cloud_monitor").(bool),
+		//CloudMonitorFlags:        d.Get("install_cloud_monitor").(bool),
 		ZoneId:                   zoneId,
 	}
 
@@ -618,9 +613,10 @@ func buildKunernetesArgs(d *schema.ResourceData, meta interface{}) (*cs.Kubernet
 			return nil, fmt.Errorf("The specified vswitch %s isn't in the zone %s.", vsw.VSwitchId, stackArgs.ZoneId)
 		}
 		stackArgs.ZoneId = vsw.ZoneId
-	} else if !stackArgs.SNatEntry {
-		return nil, fmt.Errorf("The automatic created VPC and VSwitch must set 'new_nat_gateway' to 'true'.")
 	}
+	//else if !stackArgs.SNatEntry {
+	//	return nil, fmt.Errorf("The automatic created VPC and VSwitch must set 'new_nat_gateway' to 'true'.")
+	//}
 
 	return &cs.KubernetesCreationArgs{
 		Name:              clusterName,

@@ -61,6 +61,30 @@ type ClusterType struct {
 	DockerVersion          string           `json:"docker_version"`
 }
 
+type ClusterDetailType struct{
+	ClusterType
+
+	Parameters		KubernetesClusterDetailParameters	`json:"parameters"`
+	Outputs		[]KubernetesClusterDetailOutputKV	`json:"outputs"`
+}
+
+
+type KubernetesClusterDetailParameters struct {
+	VpcId		string	`json:"VpcId"`
+	VSwitchId	string	`json:"VSwitchId"`
+	ZoneId		string	`json:"ZoneId"`
+	SSHFlags	string	`json:"SSHFlags"`
+	ServiceCIDR	string	`json:"ServiceCIDR"`
+	ContainerCIDR	string	`json:"ContainerCIDR"`
+
+}
+
+type KubernetesClusterDetailOutputKV struct {
+	Key		string	`json:"OutputKey"`
+	Val		interface{}	`json:"OutputValue"`
+	Description		string	`json:"Description"`
+}
+
 func (client *Client) DescribeClusters(nameFilter string) (clusters []ClusterType, err error) {
 	query := make(url.Values)
 
@@ -72,7 +96,7 @@ func (client *Client) DescribeClusters(nameFilter string) (clusters []ClusterTyp
 	return
 }
 
-func (client *Client) DescribeCluster(id string) (cluster ClusterType, err error) {
+func (client *Client) DescribeCluster(id string) (cluster ClusterDetailType, err error) {
 	err = client.Invoke("", http.MethodGet, "/clusters/"+id, nil, nil, &cluster)
 	return
 }
@@ -121,8 +145,8 @@ type KubernetesStackArgs struct {
 	WorkerSystemDiskSize     int64            `json:"WorkerSystemDiskSize"`
 	WorkerSystemDiskCategory ecs.DiskCategory `json:"WorkerSystemDiskCategory"`
 	ImageID                  string           `json:"ImageId,omitempty"`
-	CloudMonitorFlags        bool             `json:"CloudMonitorFlags"`
-	SNatEntry                bool             `json:"SNatEntry"`
+	//CloudMonitorFlags        bool             `json:"CloudMonitorFlags"`
+	//SNatEntry                bool             `json:"SNatEntry"`
 }
 
 type KubernetesCreationArgs struct {
@@ -217,6 +241,7 @@ func (client *Client) GetKubernetesClusterNodes(id string, pagination common.Pag
 
 	return response.Nodes, &response.Page, nil
 }
+
 
 const ClusterDefaultTimeout = 300
 const DefaultWaitForInterval = 10

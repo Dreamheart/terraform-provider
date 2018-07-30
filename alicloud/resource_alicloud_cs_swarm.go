@@ -154,12 +154,14 @@ func resourceAlicloudCSSwarmCreate(d *schema.ResourceData, meta interface{}) err
 	conn := client.csconn
 
 	// Ensure instance_type is valid
-	zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
-	if err != nil {
-		return err
-	}
-	if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
-		return err
+	if IsSkipResourceCheck() == false {
+		zoneId, validZones, err := meta.(*AliyunClient).DescribeAvailableResources(d, meta, InstanceTypeResource)
+		if err != nil {
+			return err
+		}
+		if err := meta.(*AliyunClient).InstanceTypeValidation(d.Get("instance_type").(string), zoneId, validZones); err != nil {
+			return err
+		}
 	}
 
 	var clusterName string

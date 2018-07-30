@@ -1,6 +1,7 @@
 package cs
 
 import (
+	"os"
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
@@ -44,12 +45,22 @@ type Response struct {
 	RequestId string `json:"request_id"`
 }
 
+// Load endpoint from env parameter, or CSDefaultEndpoint
+func GetEndpoint() string{
+	ep := os.Getenv("CS_ENDPOINT")
+	if ep != ""{
+		return ep
+	}else{
+		return CSDefaultEndpoint
+	}
+}
+
 // NewClient creates a new instance of CRM client
 func NewClient(accessKeyId, accessKeySecret string) *Client {
 	return &Client{
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
-		endpoint:        CSDefaultEndpoint,
+		endpoint:        GetEndpoint(),
 		Version:         CSAPIVersion,
 		httpClient:      &http.Client{},
 	}
@@ -60,7 +71,7 @@ func NewClientForAussumeRole(accessKeyId, accessKeySecret, securityToken string)
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
 		SecurityToken:   securityToken,
-		endpoint:        CSDefaultEndpoint,
+		endpoint:        GetEndpoint(),
 		Version:         CSAPIVersion,
 		httpClient:      &http.Client{},
 	}
