@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-
+	"os"
 	"github.com/denverdino/aliyungo/common"
 	"github.com/denverdino/aliyungo/util"
 )
@@ -47,7 +47,7 @@ type Response struct {
 // NewClient creates a new instance of CRM client
 func NewClient(accessKeyId, accessKeySecret string) *Client {
 	cs_ep := CSDefaultEndpoint
-	if os.Getenv("CS_ENDPOINT") != nil{
+	if os.Getenv("CS_ENDPOINT") != ""{
 		cs_ep = os.Getenv("CS_ENDPOINT")
 	}
 
@@ -62,7 +62,7 @@ func NewClient(accessKeyId, accessKeySecret string) *Client {
 
 func NewClientForAussumeRole(accessKeyId, accessKeySecret, securityToken string) *Client {
 	cs_ep := CSDefaultEndpoint
-	if os.Getenv("CS_ENDPOINT") != nil{
+	if os.Getenv("CS_ENDPOINT") != ""{
 		cs_ep = os.Getenv("CS_ENDPOINT")
 	}
 
