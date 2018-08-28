@@ -3,11 +3,8 @@ package alicloud
 import (
 	"fmt"
 	"strings"
-
 	"time"
-
 	"strconv"
-
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -489,5 +486,41 @@ func (client *AliyunClient) WaitForNetworkInterface(network_interface_id string,
 		time.Sleep(DefaultIntervalShort * time.Second)
 
 	}
+	return nil
+}
+
+// wait for instance have network interface
+func (client *AliyunClient) WaitForInstanceContainNetworkInterface(instance_id string, network_interface_id string, timeout int) error {
+	if timeout <= 0 {
+		timeout = DefaultTimeout
+	}
+
+	for {
+		inst, err := client.DescribeInstanceById(instance_id)
+
+		if err != nil {
+			return err
+		}
+
+		ready := false
+		for _, eni := range inst.NetworkInterfaces.NetworkInterface{
+			if eni.NetworkInterfaceId == network_interface_id{
+				time.Sleep(DefaultIntervalMedium * time.Second)
+				ready = true
+				break
+			}
+		}
+		if ready == true {
+			break
+		}
+
+		timeout = timeout - DefaultIntervalShort
+		if timeout <= 0 {
+			return GetTimeErrorFromString(GetTimeoutMessage("Instance_Attach_ENI", "Ready"))
+		}
+		time.Sleep(DefaultIntervalShort * time.Second)
+
+	}
+
 	return nil
 }

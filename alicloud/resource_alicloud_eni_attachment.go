@@ -52,7 +52,11 @@ func resourceAliyunEniAttachmentCreate(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	if err := client.WaitForNetworkInterface(args.NetworkInterfaceId, InUse, 60); err != nil {
+	//if err := client.WaitForNetworkInterface(args.NetworkInterfaceId, InUse, 60); err != nil {
+	//	return fmt.Errorf("Error Waitting for ENI attached: %#v", err)
+	//}
+
+	if err := client.WaitForInstanceContainNetworkInterface(args.InstanceId, args.NetworkInterfaceId, 60); err != nil{
 		return fmt.Errorf("Error Waitting for ENI attached: %#v", err)
 	}
 
@@ -69,23 +73,36 @@ func resourceAliyunEniAttachmentRead(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	eni, err := client.DescribeNetworkInterfaceById(networkInterfaceId)
+	//eni, err := client.DescribeNetworkInterfaceById(networkInterfaceId)
+	inst, err := client.DescribeInstanceById(instanceId)
 
 	if err != nil {
 		if NotFoundError(err) {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("Error Describe NetworkInterface Attribute: %#v", err)
+		return fmt.Errorf("Error Describe Instance Attribute: %#v", err)
 	}
 
-	if eni.InstanceId != instanceId {
+	//if eni.InstanceId != instanceId {
+	//	d.SetId("")
+	//	return nil
+	//}
+
+	ready := false
+	for _, eni := range inst.NetworkInterfaces.NetworkInterface{
+		if eni.NetworkInterfaceId == networkInterfaceId{
+			ready = true
+			break
+		}
+	}
+	if ready == false {
 		d.SetId("")
 		return nil
 	}
 
-	d.Set("instance_id", eni.InstanceId)
-	d.Set("network_interface_id", eni.NetworkInterfaceId)
+	d.Set("instance_id", inst.InstanceId)
+	d.Set("network_interface_id", networkInterfaceId)
 	return nil
 }
 
@@ -109,7 +126,9 @@ func resourceAliyunEniAttachmentDelete(d *schema.ResourceData, meta interface{})
 			}
 		}
 
-		eni, descErr := client.DescribeNetworkInterfaceById(networkInterfaceId)
+		//eni, descErr := client.DescribeNetworkInterfaceById(networkInterfaceId)
+		inst, descErr := client.DescribeInstanceById(instanceId)
+
 		if descErr != nil {
 			if NotFoundError(err) {
 				return nil
@@ -117,7 +136,14 @@ func resourceAliyunEniAttachmentDelete(d *schema.ResourceData, meta interface{})
 			return resource.NonRetryableError(descErr)
 		}
 
-		if eni.InstanceId == instanceId {
+		ready := false
+		for _, eni := range inst.NetworkInterfaces.NetworkInterface{
+			if eni.NetworkInterfaceId == networkInterfaceId{
+				ready = true
+				break
+			}
+		}
+		if ready == true {
 			return resource.RetryableError(fmt.Errorf("Detach NetworkInterface timeout and got an error:%#v.", err))
 		}
 

@@ -46,21 +46,31 @@ type Response struct {
 
 // NewClient creates a new instance of CRM client
 func NewClient(accessKeyId, accessKeySecret string) *Client {
+	cs_ep := CSDefaultEndpoint
+	if os.Getenv("CS_ENDPOINT") != nil{
+		cs_ep = os.Getenv("CS_ENDPOINT")
+	}
+
 	return &Client{
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
-		endpoint:        CSDefaultEndpoint,
+		endpoint:        cs_ep,
 		Version:         CSAPIVersion,
 		httpClient:      &http.Client{},
 	}
 }
 
 func NewClientForAussumeRole(accessKeyId, accessKeySecret, securityToken string) *Client {
+	cs_ep := CSDefaultEndpoint
+	if os.Getenv("CS_ENDPOINT") != nil{
+		cs_ep = os.Getenv("CS_ENDPOINT")
+	}
+
 	return &Client{
 		AccessKeyId:     accessKeyId,
 		AccessKeySecret: accessKeySecret,
 		SecurityToken:   securityToken,
-		endpoint:        CSDefaultEndpoint,
+		endpoint:        cs_ep,
 		Version:         CSAPIVersion,
 		httpClient:      &http.Client{},
 	}
